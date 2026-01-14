@@ -5,3 +5,74 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model User {
+  id             String   @id @default(cuid())
+  username       String   @unique
+  email          String   @unique
+  password       String
+  bio            String   @default("")
+  profilePicture String   @default("")
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  posts          Post[]
+  comments       Comment[]
+  likes          Like[]
+}
+
+model Post {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  coverImage  String?  // optional
+
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  comments    Comment[]
+  likes       Like[]
+
+  @@index([authorId])
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  content    String
+
+  postId     String
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([postId])
+  @@index([userId])
+}
+
+model Like {
+  id        String   @id @default(cuid())
+
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  // ✅ One user can like a post only once
+  @@unique([postId, userId])
+
+  @@index([postId])
+  @@index([userId])
+}
